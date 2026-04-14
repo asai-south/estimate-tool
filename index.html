@@ -119,6 +119,31 @@ tfoot tr td:first-child { color: var(--text); font-family: var(--sans); text-ali
 .toast.show { opacity: 1; transform: translateY(0); }
 
 ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+.tabs { display: flex; gap: 4px; margin-bottom: 20px; background: var(--bg3); border-radius: 12px; padding: 4px; }
+.tab { flex: 1; padding: 10px; border: none; border-radius: 9px; background: transparent; font-family: var(--sans); font-size: 14px; font-weight: 600; color: var(--text3); cursor: pointer; transition: all .15s; }
+.tab.active { background: #fff; color: var(--accent2); box-shadow: var(--shadow); }
+.tab:hover:not(.active) { color: var(--text); }
+
+.btn-save { background: linear-gradient(135deg, #4f7ef8, #7c3aed); color: #fff; }
+.btn-save:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(79,126,248,.35); }
+
+.history-toolbar { display: flex; gap: 10px; margin-bottom: 16px; }
+.history-search { flex: 1; background: #fff; border: 1.5px solid var(--border); border-radius: 10px; padding: 10px 16px; font-family: var(--sans); font-size: 15px; color: var(--text); outline: none; transition: border-color .15s; }
+.history-search:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,126,248,.1); }
+.history-search::placeholder { color: var(--text3); }
+
+.history-list { display: flex; flex-direction: column; gap: 10px; }
+.history-card { background: #fff; border: 1.5px solid var(--border); border-radius: 12px; padding: 16px 20px; cursor: pointer; transition: all .15s; }
+.history-card:hover { border-color: var(--accent); box-shadow: var(--shadow-md); transform: translateY(-1px); }
+.hc-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.hc-client { font-size: 16px; font-weight: 700; color: var(--text); }
+.hc-date { font-size: 12px; color: var(--text3); font-family: var(--mono); }
+.hc-bottom { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.hc-amount { font-size: 18px; font-weight: 700; color: var(--accent2); font-family: var(--mono); }
+.hc-scale { font-size: 12px; background: var(--bg3); border-radius: 6px; padding: 3px 10px; color: var(--text2); font-weight: 600; }
+.hc-hours { font-size: 12px; color: var(--text3); font-family: var(--mono); }
+.hc-notes { font-size: 12px; color: var(--text3); margin-top: 6px; }
 </style>
 </head>
 <body>
@@ -173,27 +198,47 @@ tfoot tr td:first-child { color: var(--text); font-family: var(--sans); text-ali
   </div>
 
   <div class="right">
-    <div class="actions">
-      <button class="btn btn-green" onclick="exportCSV()">
-        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-        CSVダウンロード
-      </button>
-      <button class="btn btn-secondary" onclick="copyText()">
-        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
-        テキストコピー
-      </button>
-      <button class="btn btn-secondary" onclick="resetAll()">
-        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M3 12a9 9 0 101.69-5.25L3 3v4h4"/></svg>
-        リセット
-      </button>
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('estimate')">📋 見積もり</button>
+      <button class="tab" onclick="switchTab('history')">🕐 履歴</button>
     </div>
-    <div class="scale-info" id="scaleInfo"></div>
-    <div class="breakdown">
-      <div class="breakdown-header">
-        <div class="breakdown-title">見積明細</div>
-        <div style="font-size: 13px;color:var(--text3);font-family:var(--mono)" id="clientLabel"></div>
+    <div id="tabEstimate">
+      <div class="actions">
+        <button class="btn btn-save" onclick="saveEstimate()">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          保存
+        </button>
+        <button class="btn btn-green" onclick="exportCSV()">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+          CSVダウンロード
+        </button>
+        <button class="btn btn-secondary" onclick="copyText()">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+          コピー
+        </button>
+        <button class="btn btn-secondary" onclick="resetAll()">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M3 12a9 9 0 101.69-5.25L3 3v4h4"/></svg>
+          リセット
+        </button>
       </div>
-      <div id="tableWrap"></div>
+      <div class="scale-info" id="scaleInfo"></div>
+      <div class="breakdown">
+        <div class="breakdown-header">
+          <div class="breakdown-title">見積明細</div>
+          <div style="font-size:13px;color:var(--text3);font-family:var(--mono)" id="clientLabel"></div>
+        </div>
+        <div id="tableWrap"></div>
+      </div>
+    </div>
+    <div id="tabHistory" style="display:none">
+      <div class="history-toolbar">
+        <input type="text" class="history-search" id="historySearch" placeholder="クライアント名で検索…" oninput="filterHistory()">
+        <button class="btn btn-secondary" onclick="loadHistory()">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M3 12a9 9 0 101.69-5.25L3 3v4h4"/></svg>
+          更新
+        </button>
+      </div>
+      <div id="historyWrap"><div class="empty-state"><div class="icon">🕐</div><p>読み込み中…</p></div></div>
     </div>
   </div>
 </div>
@@ -407,6 +452,114 @@ function toast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg; t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ============================================================
+// GAS連携
+// ============================================================
+const GAS_URL = 'https://script.google.com/a/macros/southagency.email/s/AKfycbw4-YNxcIW4zY4GyENS4fS3s4w-6vaC7S6Pf-DdYnwnx5nEU6xvPVTXVmGozR9VveHLAA/exec';
+
+async function saveEstimate() {
+  const client = document.getElementById('clientName').value.trim();
+  if (!client) { toast('クライアント名を入力してください'); return; }
+
+  const { total, totalYen, rate } = calc();
+  if (total === 0) { toast('ページ種別を追加してください'); return; }
+
+  const btn = document.querySelector('.btn-save');
+  btn.textContent = '保存中…'; btn.disabled = true;
+
+  const payload = {
+    date: new Date().toLocaleDateString('ja-JP'),
+    client,
+    scale: SCALES[S.scale].label,
+    totalH: total,
+    totalYen,
+    rate,
+    qty: S.qty,
+    fx: S.fx,
+    notes: document.getElementById('notesInput').value
+  };
+
+  try {
+    await fetch(GAS_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    toast('✅ スプレッドシートに保存しました！');
+  } catch(e) {
+    toast('❌ 保存に失敗しました');
+  } finally {
+    btn.innerHTML = '<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> 保存';
+    btn.disabled = false;
+  }
+}
+
+let historyData = [];
+
+async function loadHistory() {
+  const wrap = document.getElementById('historyWrap');
+  wrap.innerHTML = '<div class="empty-state"><div class="icon">⏳</div><p>読み込み中…</p></div>';
+  try {
+    const res = await fetch(GAS_URL + '?t=' + Date.now());
+    const json = await res.json();
+    historyData = json.data || [];
+    renderHistory(historyData);
+  } catch(e) {
+    wrap.innerHTML = '<div class="empty-state"><div class="icon">❌</div><p>読み込みに失敗しました</p></div>';
+  }
+}
+
+function renderHistory(data) {
+  const wrap = document.getElementById('historyWrap');
+  if (!data.length) {
+    wrap.innerHTML = '<div class="empty-state"><div class="icon">📭</div><p>まだ履歴がありません</p></div>';
+    return;
+  }
+  const SCALE_LABELS = { '小規模（5P以下）': '小', '通常（6〜16P）': '通常', '大規模（17P+）': '大規模' };
+  wrap.innerHTML = '<div class="history-list">' + data.map(d => `
+    <div class="history-card" onclick="loadFromHistory(${JSON.stringify(d).replace(/"/g, '&quot;')})">
+      <div class="hc-top">
+        <div class="hc-client">${d.client}</div>
+        <div class="hc-date">${d.date}</div>
+      </div>
+      <div class="hc-bottom">
+        <div class="hc-amount">¥${Number(d.totalYen).toLocaleString()}</div>
+        <div class="hc-scale">${d.scale}</div>
+        <div class="hc-hours">${d.totalH}h / ¥${Number(d.rate).toLocaleString()}/h</div>
+      </div>
+      ${d.notes ? `<div class="hc-notes">📝 ${d.notes}</div>` : ''}
+    </div>
+  `).join('') + '</div>';
+}
+
+function filterHistory() {
+  const q = document.getElementById('historySearch').value;
+  const filtered = q ? historyData.filter(d => d.client.includes(q) || d.scale.includes(q)) : historyData;
+  renderHistory(filtered);
+}
+
+function loadFromHistory(d) {
+  // 見積もりタブに切り替えてデータをロード
+  switchTab('estimate');
+  document.getElementById('clientName').value = d.client;
+  setScale(Object.keys(SCALES).find(k => SCALES[k].label === d.scale) || 'normal');
+  S.qty = { top: d.qty.top||0, fixed: d.qty.fixed||0, custom: d.qty.custom||0, post: d.qty.post||0, form: d.qty.form||0 };
+  S.fx = { wp: !!d.fx.wp, debug: !!d.fx.debug };
+  document.getElementById('notesInput').value = d.notes || '';
+  document.getElementById('rateInput').value = d.rate || 5000;
+  renderPT(); renderFX(); render();
+  toast(`「${d.client}」を読み込みました`);
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tabEstimate').style.display = tab === 'estimate' ? '' : 'none';
+  document.getElementById('tabHistory').style.display = tab === 'history' ? '' : 'none';
+  document.querySelector(`.tab:${tab === 'estimate' ? 'first' : 'last'}-child`).classList.add('active');
+  if (tab === 'history') loadHistory();
 }
 
 init();
