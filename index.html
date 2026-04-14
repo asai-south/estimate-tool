@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>見積もりツール β | asai-south</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f1117; --bg2: #181c27; --bg3: #1e2333; --border: #2a3045;
+  --accent: #3b82f6; --accent2: #60a5fa; --green: #10b981; --yellow: #f59e0b; --red: #ef4444;
+  --text: #e2e8f0; --text2: #94a3b8; --text3: #64748b;
+  --mono: 'JetBrains Mono', monospace; --sans: 'Noto Sans JP', sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 14px; min-height: 100vh; }
+
+header {
+  background: var(--bg2); border-bottom: 1px solid var(--border);
+  padding: 0 32px; height: 56px; display: flex; align-items: center; gap: 12px;
+  position: sticky; top: 0; z-index: 100;
+}
+.logo { font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--accent2); letter-spacing: .05em; }
+.logo span { color: var(--text3); }
+.hbadge { background: var(--accent); color: #fff; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 99px; }
+.header-right { margin-left: auto; display: flex; align-items: center; gap: 16px; }
+.rate-wrap { display: flex; align-items: center; gap: 8px; background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; }
+.rate-label { font-size: 11px; color: var(--text3); font-family: var(--mono); }
+.rate-input { background: transparent; border: none; color: var(--accent2); font-family: var(--mono); font-size: 14px; font-weight: 600; width: 72px; text-align: right; outline: none; }
+
+.main { display: grid; grid-template-columns: 340px 1fr; min-height: calc(100vh - 56px); }
+
+.left { background: var(--bg2); border-right: 1px solid var(--border); padding: 24px; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; max-height: calc(100vh - 56px); position: sticky; top: 56px; }
+.right { padding: 24px 32px; overflow-y: auto; }
+
+.sec-title { font-size: 11px; font-weight: 700; letter-spacing: .1em; color: var(--text3); text-transform: uppercase; margin-bottom: 10px; }
+
+.scale-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
+.scale-btn { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 12px 8px; cursor: pointer; text-align: center; transition: all .15s; color: var(--text2); }
+.scale-btn:hover { border-color: var(--accent); color: var(--text); }
+.scale-btn.active { background: rgba(59,130,246,.1); border-color: var(--accent); color: var(--accent2); }
+.scale-name { font-weight: 700; font-size: 13px; display: block; margin-bottom: 4px; }
+.scale-desc { font-size: 10px; color: var(--text3); line-height: 1.4; }
+.scale-btn.active .scale-desc { color: var(--accent); opacity: .7; }
+
+.page-types { display: flex; flex-direction: column; gap: 6px; }
+.pt-row { display: grid; grid-template-columns: 1fr auto auto auto; align-items: center; gap: 8px; background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; }
+.pt-row.disabled { opacity: .35; pointer-events: none; }
+.pt-name { font-size: 12px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
+.pt-hours { font-family: var(--mono); font-size: 10px; color: var(--text3); }
+.qty-btn { width: 24px; height: 24px; background: var(--bg2); border: 1px solid var(--border); border-radius: 4px; color: var(--text2); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; transition: all .1s; flex-shrink: 0; }
+.qty-btn:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
+.qty-disp { font-family: var(--mono); font-size: 14px; font-weight: 600; color: var(--accent2); width: 24px; text-align: center; flex-shrink: 0; }
+
+.fixed-items { display: flex; flex-direction: column; gap: 6px; }
+.toggle-row { display: flex; align-items: center; gap: 10px; background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; cursor: pointer; }
+.toggle { width: 36px; height: 20px; background: var(--bg); border: 1px solid var(--border); border-radius: 99px; position: relative; transition: background .2s; flex-shrink: 0; }
+.toggle::after { content: ''; position: absolute; width: 14px; height: 14px; background: var(--text3); border-radius: 50%; top: 2px; left: 2px; transition: all .2s; }
+.toggle.on { background: var(--accent); border-color: var(--accent); }
+.toggle.on::after { left: 18px; background: #fff; }
+.toggle-label { font-size: 12px; font-weight: 600; color: var(--text); flex: 1; }
+.toggle-hours { font-family: var(--mono); font-size: 10px; color: var(--text3); }
+
+.notes-area { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; width: 100%; color: var(--text); font-family: var(--sans); font-size: 12px; resize: vertical; min-height: 72px; outline: none; transition: border-color .15s; }
+.notes-area:focus { border-color: var(--accent); }
+.notes-area::placeholder { color: var(--text3); }
+
+.client-input { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; width: 100%; color: var(--text); font-family: var(--sans); font-size: 13px; font-weight: 700; outline: none; transition: border-color .15s; }
+.client-input:focus { border-color: var(--accent); }
+.client-input::placeholder { color: var(--text3); font-weight: 400; }
+
+.actions { display: flex; gap: 10px; margin-bottom: 20px; }
+.btn { padding: 10px 18px; border-radius: 8px; border: none; cursor: pointer; font-family: var(--sans); font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 8px; transition: all .15s; }
+.btn-green { background: rgba(16,185,129,.15); color: var(--green); border: 1px solid rgba(16,185,129,.3); }
+.btn-green:hover { background: rgba(16,185,129,.25); }
+.btn-secondary { background: var(--bg2); color: var(--text2); border: 1px solid var(--border); }
+.btn-secondary:hover { background: var(--bg3); color: var(--text); }
+
+.scale-info { background: rgba(59,130,246,.06); border: 1px solid rgba(59,130,246,.2); border-radius: 8px; padding: 10px 14px; margin-bottom: 20px; font-size: 11px; color: var(--accent2); font-family: var(--mono); display: flex; gap: 16px; flex-wrap: wrap; }
+.scale-info span { color: var(--text3); margin-right: 4px; }
+
+.breakdown { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.breakdown-header { padding: 14px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.breakdown-title { font-size: 12px; font-weight: 700; letter-spacing: .05em; color: var(--text2); }
+
+table { width: 100%; border-collapse: collapse; }
+thead th { background: var(--bg3); padding: 10px 20px; font-size: 10px; font-weight: 700; letter-spacing: .08em; color: var(--text3); text-transform: uppercase; text-align: left; }
+thead th:not(:first-child) { text-align: right; }
+tbody tr { border-top: 1px solid var(--border); }
+tbody tr:hover { background: rgba(255,255,255,.02); }
+tbody td { padding: 11px 20px; font-size: 13px; color: var(--text); }
+tbody td:not(:first-child) { text-align: right; font-family: var(--mono); color: var(--text2); }
+.row-label { font-weight: 500; }
+.rbadge { display: inline-block; font-size: 9px; font-weight: 700; letter-spacing: .06em; padding: 2px 6px; border-radius: 4px; margin-left: 6px; vertical-align: middle; }
+.bt { background: rgba(59,130,246,.2); color: var(--accent2); }
+.bf { background: rgba(100,116,139,.2); color: #94a3b8; }
+.bc { background: rgba(16,185,129,.2); color: var(--green); }
+.bp { background: rgba(245,158,11,.2); color: var(--yellow); }
+.bfm { background: rgba(239,68,68,.2); color: var(--red); }
+.bd { background: rgba(168,85,247,.2); color: #c084fc; }
+.bw { background: rgba(251,191,36,.2); color: #fbbf24; }
+.bdb { background: rgba(239,68,68,.15); color: #f87171; }
+
+tfoot tr td { padding: 14px 20px; background: var(--bg3); font-weight: 700; border-top: 2px solid var(--border); color: var(--accent2); font-family: var(--mono); font-size: 15px; text-align: right; }
+tfoot tr td:first-child { color: var(--text); font-family: var(--sans); text-align: left; }
+
+.empty-state { text-align: center; padding: 60px 20px; color: var(--text3); }
+.empty-state .icon { font-size: 36px; margin-bottom: 12px; opacity: .4; }
+.empty-state p { font-size: 13px; }
+
+.toast { position: fixed; bottom: 24px; right: 24px; background: var(--green); color: #fff; padding: 12px 20px; border-radius: 8px; font-weight: 700; font-size: 13px; z-index: 999; opacity: 0; transform: translateY(8px); transition: all .2s; pointer-events: none; }
+.toast.show { opacity: 1; transform: translateY(0); }
+
+::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">asai-south / <span>estimate-tool</span></div>
+  <div class="hbadge">β</div>
+  <div class="header-right">
+    <div class="rate-wrap">
+      <span class="rate-label">単価 ¥</span>
+      <input type="number" class="rate-input" id="rateInput" value="5000" step="500">
+      <span class="rate-label">/ h</span>
+    </div>
+  </div>
+</header>
+
+<div class="main">
+  <div class="left">
+    <div>
+      <div class="sec-title">クライアント名</div>
+      <input type="text" class="client-input" id="clientName" placeholder="例：健生会様">
+    </div>
+    <div>
+      <div class="sec-title">サイト規模</div>
+      <div class="scale-grid">
+        <button class="scale-btn" data-scale="small" onclick="setScale('small')">
+          <span class="scale-name">小規模</span>
+          <span class="scale-desc">5P以下<br>カスタム投稿なし</span>
+        </button>
+        <button class="scale-btn active" data-scale="normal" onclick="setScale('normal')">
+          <span class="scale-name">通常</span>
+          <span class="scale-desc">6〜16P<br>標準構成</span>
+        </button>
+        <button class="scale-btn" data-scale="large" onclick="setScale('large')">
+          <span class="scale-name">大規模</span>
+          <span class="scale-desc">17P以上<br>機能多数</span>
+        </button>
+      </div>
+    </div>
+    <div>
+      <div class="sec-title">ページ種別 / 件数</div>
+      <div class="page-types" id="pageTypes"></div>
+    </div>
+    <div>
+      <div class="sec-title">固定項目</div>
+      <div class="fixed-items" id="fixedItems"></div>
+    </div>
+    <div>
+      <div class="sec-title">備考・メモ</div>
+      <textarea class="notes-area" id="notesInput" placeholder="手動調整メモ、特記事項など…"></textarea>
+    </div>
+  </div>
+
+  <div class="right">
+    <div class="actions">
+      <button class="btn btn-green" onclick="exportCSV()">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+        CSVダウンロード
+      </button>
+      <button class="btn btn-secondary" onclick="copyText()">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+        テキストコピー
+      </button>
+      <button class="btn btn-secondary" onclick="resetAll()">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M3 12a9 9 0 101.69-5.25L3 3v4h4"/></svg>
+        リセット
+      </button>
+    </div>
+    <div class="scale-info" id="scaleInfo"></div>
+    <div class="breakdown">
+      <div class="breakdown-header">
+        <div class="breakdown-title">見積明細</div>
+        <div style="font-size:11px;color:var(--text3);font-family:var(--mono)" id="clientLabel"></div>
+      </div>
+      <div id="tableWrap"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SCALES = {
+  small:  { label: '小規模（5P以下）', top: { design: 16, coding: 24 } },
+  normal: { label: '通常（6〜16P）',   top: { design: 24, coding: 40 } },
+  large:  { label: '大規模（17P+）',   top: { design: 32, coding: 56 } },
+};
+
+const PT_DEF = [
+  { key: 'top',    label: 'トップページ',   cls: 'bt',  design: null, coding: null, maxQty: 1, scaleKey: true },
+  { key: 'fixed',  label: '固定ページ',     cls: 'bf',  design: 2,    coding: 2 },
+  { key: 'custom', label: 'カスタム投稿',   cls: 'bc',  design: 4,    coding: 8,  noSmall: true, note: '1スラッグ1件カウント' },
+  { key: 'post',   label: '通常投稿',       cls: 'bp',  design: 2,    coding: 8,  noSmall: true, note: '1スラッグ1件カウント' },
+  { key: 'form',   label: 'フォームページ', cls: 'bfm', design: 2,    coding: 6 },
+];
+
+const FX_DEF = [
+  { key: 'wp',    label: 'WordPress構築費', hours: 8,  cls: 'bw' },
+  { key: 'debug', label: 'デバッグ費',       hours: 16, cls: 'bdb' },
+];
+
+let S = {
+  scale: 'normal',
+  qty: { top: 1, fixed: 0, custom: 0, post: 0, form: 0 },
+  fx: { wp: true, debug: true },
+};
+
+function init() {
+  renderPT(); renderFX(); render();
+  document.getElementById('rateInput').addEventListener('input', render);
+  document.getElementById('clientName').addEventListener('input', render);
+}
+
+function setScale(sc) {
+  S.scale = sc;
+  document.querySelectorAll('.scale-btn').forEach(b => b.classList.toggle('active', b.dataset.scale === sc));
+  if (sc === 'small') { S.qty.custom = 0; S.qty.post = 0; }
+  renderPT(); render();
+}
+
+function renderPT() {
+  const wrap = document.getElementById('pageTypes');
+  wrap.innerHTML = '';
+  PT_DEF.forEach(pt => {
+    const dis = pt.noSmall && S.scale === 'small';
+    const q = S.qty[pt.key] || 0;
+    let hStr;
+    if (pt.scaleKey) {
+      const sc = SCALES[S.scale];
+      hStr = `デザイン${sc.top.design}h + 構築${sc.top.coding}h`;
+    } else {
+      hStr = `デザイン${pt.design}h + 構築${pt.coding}h`;
+    }
+    const row = document.createElement('div');
+    row.className = 'pt-row' + (dis ? ' disabled' : '');
+    row.innerHTML = `
+      <div><div class="pt-name">${pt.label}</div><div class="pt-hours">${hStr}</div></div>
+      <button class="qty-btn" onclick="chQty('${pt.key}',-1)">−</button>
+      <div class="qty-disp" id="q-${pt.key}">${q}</div>
+      <button class="qty-btn" onclick="chQty('${pt.key}',1)">＋</button>
+    `;
+    wrap.appendChild(row);
+  });
+}
+
+function chQty(key, d) {
+  const max = PT_DEF.find(p => p.key === key)?.maxQty || 99;
+  S.qty[key] = Math.max(0, Math.min(max, (S.qty[key] || 0) + d));
+  document.getElementById('q-' + key).textContent = S.qty[key];
+  render();
+}
+
+function renderFX() {
+  const wrap = document.getElementById('fixedItems');
+  wrap.innerHTML = '';
+  FX_DEF.forEach(fi => {
+    const on = S.fx[fi.key];
+    const row = document.createElement('div');
+    row.className = 'toggle-row';
+    row.onclick = () => { S.fx[fi.key] = !S.fx[fi.key]; renderFX(); render(); };
+    row.innerHTML = `
+      <div class="toggle ${on ? 'on' : ''}" id="tog-${fi.key}"></div>
+      <div class="toggle-label">${fi.label}</div>
+      <div class="toggle-hours">${fi.hours}h</div>
+    `;
+    wrap.appendChild(row);
+  });
+}
+
+function calc() {
+  const rate = parseInt(document.getElementById('rateInput').value) || 5000;
+  const sc = SCALES[S.scale];
+  const rows = [];
+  let pageH = 0;
+
+  PT_DEF.forEach(pt => {
+    const q = S.qty[pt.key] || 0;
+    if (!q) return;
+    const des = pt.scaleKey ? sc.top.design : pt.design;
+    const cod = pt.scaleKey ? sc.top.coding : pt.coding;
+    const h = (des + cod) * q;
+    pageH += h;
+    rows.push({ label: pt.label, cls: pt.cls, qty: q, design: des * q, coding: cod * q, h, yen: h * rate, note: pt.note || '' });
+  });
+
+  const dirH = Math.ceil(pageH * 0.2);
+  rows.push({ label: 'ディレクション費', cls: 'bd', qty: null, design: null, coding: null, h: dirH, yen: dirH * rate, note: 'ページ制作合計×20%', isDir: true });
+
+  let fxH = 0;
+  FX_DEF.forEach(fi => {
+    if (!S.fx[fi.key]) return;
+    fxH += fi.hours;
+    rows.push({ label: fi.label, cls: fi.cls, qty: 1, design: 0, coding: fi.hours, h: fi.hours, yen: fi.hours * rate, note: '固定' });
+  });
+
+  const total = pageH + dirH + fxH;
+  return { rows, pageH, dirH, fxH, total, totalYen: total * rate, rate };
+}
+
+function render() {
+  const { rows, total, totalYen, rate } = calc();
+  const sc = SCALES[S.scale];
+  const client = document.getElementById('clientName').value;
+
+  document.getElementById('scaleInfo').innerHTML =
+    `<span>規模：</span>${sc.label}　<span>TOP：</span>デザイン${sc.top.design}h + 構築${sc.top.coding}h　<span>単価：</span>¥${rate.toLocaleString()}/h`;
+  document.getElementById('clientLabel').textContent = client;
+
+  const wrap = document.getElementById('tableWrap');
+  const hasPages = rows.some(r => !r.isDir);
+
+  if (!hasPages) {
+    wrap.innerHTML = `<div class="empty-state"><div class="icon">📋</div><p>ページ種別を追加してください</p></div>`;
+    return;
+  }
+
+  let html = `<table><thead><tr>
+    <th>項目</th><th>件数</th><th>デザイン(h)</th><th>構築(h)</th><th>小計(h)</th><th>金額（税抜）</th>
+  </tr></thead><tbody>`;
+
+  rows.forEach(r => {
+    const q = r.qty !== null ? r.qty : '—';
+    const des = r.design !== null ? r.design : '—';
+    const cod = r.coding !== null ? r.coding : '—';
+    html += `<tr>
+      <td class="row-label">${r.label}<span class="rbadge ${r.cls}">${r.cls === 'bt' ? 'TOP' : r.cls === 'bf' ? '固定' : r.cls === 'bc' ? 'カスタム' : r.cls === 'bp' ? '投稿' : r.cls === 'bfm' ? 'フォーム' : r.cls === 'bd' ? 'DIR' : r.cls === 'bw' ? 'WP' : 'DBG'}</span></td>
+      <td>${q}</td><td>${des}</td><td>${cod}</td><td>${r.h}</td><td>¥${r.yen.toLocaleString()}</td>
+    </tr>`;
+  });
+
+  html += `</tbody><tfoot><tr>
+    <td>合計（税抜）</td><td>—</td><td>—</td><td>—</td><td>${total}h</td><td>¥${totalYen.toLocaleString()}</td>
+  </tr></tfoot></table>`;
+
+  wrap.innerHTML = html;
+}
+
+function exportCSV() {
+  const { rows, total, totalYen, rate } = calc();
+  const client = document.getElementById('clientName').value || '未設定';
+  const notes = document.getElementById('notesInput').value;
+  let csv = '\uFEFF';
+  csv += `Web制作見積もり,${client},${new Date().toLocaleDateString('ja-JP')}\n`;
+  csv += `規模,${SCALES[S.scale].label},単価,¥${rate.toLocaleString()}/h\n\n`;
+  csv += `項目,件数,デザイン(h),構築(h),小計(h),金額（税抜）,備考\n`;
+  rows.forEach(r => {
+    csv += `${r.label},${r.qty ?? ''},${r.design ?? ''},${r.coding ?? ''},${r.h},¥${r.yen.toLocaleString()},${r.note}\n`;
+  });
+  csv += `\n合計（税抜）,,,,${total}h,¥${totalYen.toLocaleString()},単価¥${rate.toLocaleString()}/h\n`;
+  if (notes) csv += `\n備考\n${notes}\n`;
+
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+  a.download = `見積もり_${client}_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  toast('CSVをダウンロードしました');
+}
+
+function copyText() {
+  const { rows, total, totalYen, rate } = calc();
+  const client = document.getElementById('clientName').value || '未設定';
+  let t = `【Web制作 見積もり】${client}\n規模：${SCALES[S.scale].label} / 単価：¥${rate.toLocaleString()}/h\n${'─'.repeat(42)}\n`;
+  rows.forEach(r => { t += `${r.label.padEnd(16)} ${String(r.h + 'h').padStart(5)}  ¥${r.yen.toLocaleString()}\n`; });
+  t += `${'─'.repeat(42)}\n合計（税抜）         ${total}h  ¥${totalYen.toLocaleString()}\n`;
+  const notes = document.getElementById('notesInput').value;
+  if (notes) t += `\n備考：\n${notes}`;
+  navigator.clipboard.writeText(t).then(() => toast('クリップボードにコピーしました'));
+}
+
+function resetAll() {
+  S.qty = { top: 0, fixed: 0, custom: 0, post: 0, form: 0 };
+  S.fx = { wp: true, debug: true };
+  document.getElementById('clientName').value = '';
+  document.getElementById('notesInput').value = '';
+  renderPT(); renderFX(); render();
+  toast('リセットしました');
+}
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+init();
+</script>
+</body>
+</html>
