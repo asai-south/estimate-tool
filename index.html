@@ -523,7 +523,7 @@ function renderHistory(data) {
     <div class="history-card" onclick="loadFromHistory(${JSON.stringify(d).replace(/"/g, '&quot;')})">
       <div class="hc-top">
         <div class="hc-client">${d.client}</div>
-        <div class="hc-date">${d.date}</div>
+        <div class="hc-date">${d.date ? new Date(d.date).toLocaleDateString('ja-JP') : ''}</div>
       </div>
       <div class="hc-bottom">
         <div class="hc-amount">¥${Number(d.totalYen).toLocaleString()}</div>
