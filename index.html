@@ -521,10 +521,13 @@ function renderHistory(data) {
   const SCALE_LABELS = { '小規模（5P以下）': '小', '通常（6〜16P）': '通常', '大規模（17P+）': '大規模' };
   wrap.innerHTML = '<div class="history-list">' + data.map(d => `
     <div class="history-card" onclick="loadFromHistory(${JSON.stringify(d).replace(/"/g, '&quot;')})">
-      <div class="hc-top">
-        <div class="hc-client">${d.client}</div>
-        <div class="hc-date">${d.date ? new Date(d.date).toLocaleDateString('ja-JP') : ''}</div>
-      </div>
+    <div class="hc-top">
+  <div class="hc-client">${d.client}</div>
+  <div style="display:flex;align-items:center;gap:8px">
+    <div class="hc-date">${d.date ? new Date(d.date).toLocaleDateString('ja-JP') : ''}</div>
+    <button onclick="event.stopPropagation();deleteHistory('${d.id}')" style="background:none;border:none;cursor:pointer;color:#e63946;font-size:16px;padding:2px 4px" title="削除">🗑</button>
+  </div>
+</div>
       <div class="hc-bottom">
         <div class="hc-amount">¥${Number(d.totalYen).toLocaleString()}</div>
         <div class="hc-scale">${d.scale}</div>
@@ -534,7 +537,16 @@ function renderHistory(data) {
     </div>
   `).join('') + '</div>';
 }
-
+async function deleteHistory(id) {
+  if (!confirm('この履歴を削除しますか？')) return;
+  try {
+    await fetch(GAS_URL + '?action=delete&id=' + id);
+    toast('🗑 削除しました');
+    loadHistory();
+  } catch(e) {
+    toast('❌ 削除に失敗しました');
+  }
+}
 function filterHistory() {
   const q = document.getElementById('historySearch').value;
   const filtered = q ? historyData.filter(d => d.client.includes(q) || d.scale.includes(q)) : historyData;
